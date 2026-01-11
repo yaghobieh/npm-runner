@@ -1,0 +1,125 @@
+{
+    "name": "npm-runner",
+    "displayName": "NPM Runner",
+    "description": "Run and manage NPM scripts with play buttons in package.json",
+    "version": "1.0.6",
+    "publisher": "Yaghobieh",
+    "license": "MIT",
+    "icon": "resources/icon.png",
+    "engines": {
+        "vscode": "^1.85.0"
+    },
+    "categories": ["Other"],
+    "keywords": ["npm", "scripts", "runner", "node", "package.json"],
+    "activationEvents": [
+        "workspaceContains:**/package.json"
+    ],
+    "main": "./dist/extension.js",
+    "contributes": {
+        "viewsContainers": {
+            "panel": [
+                {
+                    "id": "npmRunner",
+                    "title": "NPM Runner",
+                    "icon": "$(flame)"
+                }
+            ]
+        },
+        "views": {
+            "npmRunner": [
+                {
+                    "type": "webview",
+                    "id": "npmRunner.panel",
+                    "name": "NPM Runner",
+                    "icon": "$(flame)",
+                    "contextualTitle": "NPM Runner"
+                }
+            ]
+        },
+        "commands": [
+            {
+                "command": "npmRunner.runScript",
+                "title": "Run Script",
+                "category": "NPM Runner",
+                "icon": "$(play)"
+            },
+            {
+                "command": "npmRunner.debugScript",
+                "title": "Debug Script",
+                "category": "NPM Runner",
+                "icon": "$(bug)"
+            },
+            {
+                "command": "npmRunner.showAllScripts",
+                "title": "Browse All Scripts",
+                "category": "NPM Runner",
+                "icon": "$(list-flat)"
+            },
+            {
+                "command": "npmRunner.stopScript",
+                "title": "Stop Script",
+                "category": "NPM Runner",
+                "icon": "$(debug-stop)"
+            },
+            {
+                "command": "npmRunner.restartScript",
+                "title": "Restart Script",
+                "category": "NPM Runner",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "npmRunner.switchNodeVersion",
+                "title": "Switch Node Version",
+                "category": "NPM Runner",
+                "icon": "$(versions)"
+            },
+            {
+                "command": "npmRunner.stopAll",
+                "title": "Stop All Scripts",
+                "category": "NPM Runner",
+                "icon": "$(stop-circle)"
+            },
+            {
+                "command": "npmRunner.openPanel",
+                "title": "Open NPM Runner",
+                "category": "NPM Runner",
+                "icon": "$(flame)"
+            }
+        ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "npmRunner.showAllScripts",
+                    "when": "workspaceFolderCount > 0"
+                },
+                {
+                    "command": "npmRunner.switchNodeVersion"
+                },
+                {
+                    "command": "npmRunner.stopAll"
+                },
+                {
+                    "command": "npmRunner.openPanel"
+                }
+            ]
+        }
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://gitlab.com/space7733008/npm-runner.git"
+      },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --minify",
+        "watch": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --watch",
+        "package": "npx @vscode/vsce package --no-dependencies",
+        "publish:ovsx": "npm run package && npx ovsx publish npm-runner-$(node -p \"require('./package.json').version\").vsix -p ovsxat_0f98823d-9e7b-4a46-80aa-2dbc8f581076"
+    },
+    "devDependencies": {
+        "@types/node": "^20.10.0",
+        "@types/vscode": "^1.85.0",
+        "@vscode/vsce": "^2.22.0",
+        "esbuild": "^0.19.0",
+        "typescript": "^5.3.0"
+    }
+}

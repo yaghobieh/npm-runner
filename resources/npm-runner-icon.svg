@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+    <linearGradient id="flameGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#ff6b35"/>
+      <stop offset="50%" style="stop-color:#f7c531"/>
+      <stop offset="100%" style="stop-color:#ffeb3b"/>
+    </linearGradient>
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4fc3f7"/>
+      <stop offset="100%" style="stop-color:#29b6f6"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#bgGrad)"/>
+  
+  <!-- Flame/Fire character body -->
+  <path d="M64 95 
+           C45 95 35 80 35 65 
+           C35 50 45 40 50 35 
+           C52 45 58 48 62 42 
+           C60 52 65 55 70 48 
+           C72 55 80 52 82 45 
+           C88 55 93 65 93 75 
+           C93 85 83 95 64 95 Z" 
+        fill="url(#flameGrad)"/>
+  
+  <!-- Inner flame -->
+  <path d="M64 90 
+           C50 90 45 80 45 70 
+           C45 60 55 55 58 50 
+           C60 58 65 60 68 55 
+           C70 62 78 58 80 52 
+           C85 60 88 70 88 78 
+           C88 86 78 90 64 90 Z" 
+        fill="#fff3e0" opacity="0.3"/>
+  
+  <!-- Eyes -->
+  <ellipse cx="52" cy="68" rx="6" ry="7" fill="#1a1a2e"/>
+  <ellipse cx="76" cy="68" rx="6" ry="7" fill="#1a1a2e"/>
+  
+  <!-- Eye highlights -->
+  <circle cx="50" cy="66" r="2" fill="white"/>
+  <circle cx="74" cy="66" r="2" fill="white"/>
+  
+  <!-- Smile -->
+  <path d="M54 78 Q64 86 74 78" fill="none" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round"/>
+  
+  <!-- npm text badge -->
+  <rect x="42" y="98" width="44" height="16" rx="3" fill="#cb3837"/>
+  <text x="64" y="110" font-family="Arial Black, sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle">npm</text>
+  
+  <!-- Play button accent -->
+  <g transform="translate(90, 30)">
+    <circle cx="0" cy="0" r="12" fill="#4caf50"/>
+    <polygon points="-4,-6 -4,6 6,0" fill="white"/>
+  </g>
+  
+  <!-- Node.js accent -->
+  <g transform="translate(25, 35)">
+    <circle cx="0" cy="0" r="10" fill="#68a063"/>
+    <text x="0" y="4" font-family="Arial" font-size="8" font-weight="bold" fill="white" text-anchor="middle">N</text>
+  </g>
+</svg>
+
