@@ -2,7 +2,7 @@
 
 Advanced NPM script runner for VS Code, inspired by JetBrains IDEs.
 
-![NPM Runner](resources/npm-runner-icon.svg)
+![NPM Runner](resources/icon.png)
 
 Run and manage NPM scripts with one click, switch Node versions, and track all running processes.
 
@@ -35,7 +35,10 @@ Manage all running scripts in a dedicated bottom panel.
 - Real-time output streaming
 - Color-coded status: green (running), gray (stopped), red (error)
 - Stop, restart, clear output buttons
+- Copy output to clipboard
+- Execution time display
 - Ask AI for help on errors
+- Close confirmation with option to kill port
 
 ### Node Version Management
 
@@ -71,8 +74,16 @@ Search and run scripts across all projects.
 
 - Quick pick menu with search
 - Shows scripts from all package.json files
-- Grouped by project name
+- Grouped by project name (alphabetically sorted)
 - Debug mode available
+
+### Package Manager Support
+
+Run scripts with npm, yarn, or pnpm.
+
+- Auto-detects from lockfile (pnpm-lock.yaml, yarn.lock)
+- Manual override via settings
+- Shows active package manager in panel
 
 ## Installation
 
@@ -91,7 +102,7 @@ Search and run scripts across all projects.
 ### From VSIX
 
 ```bash
-code --install-extension npm-runner-1.0.6.vsix
+code --install-extension npm-runner-1.0.7.vsix
 ```
 
 ## Usage
@@ -127,6 +138,7 @@ When you see a port error:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
+| npmRunner.packageManager | auto | Package manager: auto, npm, yarn, or pnpm |
 | npmRunner.showNodeVersion | true | Show Node.js version before running |
 | npmRunner.defaultNodeVersion | "" | Default Node version (empty = system) |
 | npmRunner.confirmOnClose | true | Confirm before closing running script |

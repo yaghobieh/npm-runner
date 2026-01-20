@@ -93,12 +93,7 @@ export class NpmRunnerPanel implements vscode.WebviewViewProvider {
                 this.scriptRunner.restartScript(msg.id);
                 break;
             case 'remove':
-                this.scriptRunner.removeScript(msg.id);
-                if (this.activeTabId === msg.id) {
-                    const scripts = this.scriptRunner.getAllScripts();
-                    this.activeTabId = scripts.length > 0 ? scripts[0].id : '';
-                }
-                this.refresh();
+                await this.handleRemove(msg.id);
                 break;
             case 'clear':
                 this.scriptRunner.clearOutput(msg.id);
@@ -120,7 +115,55 @@ export class NpmRunnerPanel implements vscode.WebviewViewProvider {
             case 'switchNodeVersion':
                 this.switchNodeVersion(msg.id);
                 break;
+            case 'copyOutput':
+                this.copyOutput(msg.id);
+                break;
         }
+    }
+
+    private async copyOutput(scriptId: string): Promise<void> {
+        const script = this.scriptRunner.getScript(scriptId);
+        if (!script) return;
+
+        const cleanOutput = script.output.join('').replace(/\x1b\[[0-9;]*m/g, '');
+        await vscode.env.clipboard.writeText(cleanOutput);
+        vscode.window.showInformationMessage('Output copied to clipboard');
+    }
+
+    private async handleRemove(scriptId: string): Promise<void> {
+        const script = this.scriptRunner.getScript(scriptId);
+        if (!script) return;
+
+        const isRunning = script.status === 'running';
+        const hasPort = script.port !== null;
+
+        if (isRunning) {
+            let options: string[] = ['Stop and Close', 'Cancel'];
+            if (hasPort) {
+                options = ['Stop and Close', 'Stop, Kill Port and Close', 'Cancel'];
+            }
+
+            const choice = await vscode.window.showWarningMessage(
+                `Script "${script.name}" is still running.${hasPort ? ` Port ${script.port} is in use.` : ''}`,
+                { modal: true },
+                ...options.filter(o => o !== 'Cancel')
+            );
+
+            if (!choice) return;
+
+            await this.scriptRunner.stopScript(scriptId);
+
+            if (choice === 'Stop, Kill Port and Close' && script.port) {
+                await this.killPort(script.port);
+            }
+        }
+
+        this.scriptRunner.removeScript(scriptId);
+        if (this.activeTabId === scriptId) {
+            const scripts = this.scriptRunner.getAllScripts();
+            this.activeTabId = scripts.length > 0 ? scripts[0].id : '';
+        }
+        this.refresh();
     }
 
     private async switchNodeVersion(scriptId: string): Promise<void> {
@@ -204,6 +247,8 @@ export class NpmRunnerPanel implements vscode.WebviewViewProvider {
             || activeScript?.output.join('').match(/EADDRINUSE.*:(\d+)/i);
         const stuckPort = portMatch ? portMatch[1] : null;
 
+        const runTime = activeScript ? this.formatRunTime(activeScript.startTime) : '';
+
         const toolbarHtml = activeScript ? `
             <div class="toolbar">
                 ${isRunning ? `
@@ -221,6 +266,9 @@ export class NpmRunnerPanel implements vscode.WebviewViewProvider {
                 <button class="icon-btn" onclick="clear('${activeScript.id}')" title="Clear Output">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12v2H2zM3 6h10v8H3zM6 1h4v2H6z"/></svg>
                 </button>
+                <button class="icon-btn" onclick="copyOutput('${activeScript.id}')" title="Copy Output">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M4 4h1V2H2v11h2v-1H3V3h1v1zm2-2v11h8V2H6zm7 10H7V3h6v9z"/></svg>
+                </button>
                 ${hasError ? `
                     <button class="icon-btn ai" onclick="askAI('${activeScript.id}')" title="Ask AI for help">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="6"/><circle cx="6" cy="6" r="1.5" fill="#1e1e1e"/><circle cx="10" cy="6" r="1.5" fill="#1e1e1e"/><path d="M5 10c1.5 2 4.5 2 6 0" stroke="#1e1e1e" fill="none" stroke-width="1.5"/></svg>
@@ -232,11 +280,13 @@ export class NpmRunnerPanel implements vscode.WebviewViewProvider {
                     </button>
                 ` : ''}
                 <div class="spacer"></div>
+                <span class="run-time">${runTime}</span>
                 <span class="path">${this.esc(activeScript.cwd)}</span>
             </div>
         ` : '';
 
         const nodeVersionDisplay = activeScript?.nodeVersion || 'system';
+        const pmDisplay = activeScript?.packageManager || 'npm';
 
         return `<!DOCTYPE html>
 <html>
@@ -371,6 +421,7 @@ body {
 .icon-btn.kill-port { color: var(--orange); }
 .icon-btn.kill-port:hover { background: rgba(232, 154, 78, 0.2); }
 .spacer { flex: 1; }
+.run-time { color: var(--cyan); font-size: 12px; margin-right: 12px; font-family: var(--vscode-editor-font-family, monospace); }
 .path { color: var(--text2); font-size: 12px; }
 
 .node-info {
@@ -465,7 +516,7 @@ body {
         ${toolbarHtml}
         ${activeScript ? `
             <div class="node-info">
-                <span>Node ${this.esc(nodeVersionDisplay)} • npm run ${this.esc(activeScript.name)}</span>
+                <span>Node ${this.esc(nodeVersionDisplay)} | ${this.esc(pmDisplay)} run ${this.esc(activeScript.name)}</span>
                 <a class="switch-link" onclick="switchNodeVersion('${activeScript.id}')">Switch Node</a>
             </div>
         ` : ''}
@@ -489,6 +540,7 @@ body {
         const showScripts = () => vscode.postMessage({cmd:'showScripts'});
         const killPort = port => vscode.postMessage({cmd:'killPort',port});
         const switchNodeVersion = id => vscode.postMessage({cmd:'switchNodeVersion',id});
+        const copyOutput = id => vscode.postMessage({cmd:'copyOutput',id});
 
         const outputEl = document.getElementById('output');
 
@@ -558,5 +610,25 @@ body {
 
     private esc(s: string): string {
         return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c));
+    }
+
+    private formatRunTime(startTime: Date): string {
+        const now = new Date();
+        const diff = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+        
+        if (diff < 60) {
+            return `${diff}s`;
+        }
+        
+        const minutes = Math.floor(diff / 60);
+        const seconds = diff % 60;
+        
+        if (minutes < 60) {
+            return `${minutes}m ${seconds}s`;
+        }
+        
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = minutes % 60;
+        return `${hours}h ${remainingMinutes}m`;
     }
 }

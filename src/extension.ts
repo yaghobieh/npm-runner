@@ -184,13 +184,22 @@ async function showAllScriptsMenu() {
         kind?: vscode.QuickPickItemKind;
     }
 
-    const items: ScriptItem[] = [];
+    const projectGroups: Map<string, { scripts: Array<{ name: string; command: string }>, packagePath: string }> = new Map();
 
     for (const pkgFile of pkgFiles) {
         const scripts = await getScriptsFromPackageJson(pkgFile.fsPath);
         if (scripts.length === 0) continue;
 
         const projectName = path.basename(path.dirname(pkgFile.fsPath));
+        projectGroups.set(projectName, { scripts, packagePath: pkgFile.fsPath });
+    }
+
+    const sortedProjects = Array.from(projectGroups.keys()).sort();
+    const items: ScriptItem[] = [];
+
+    for (const projectName of sortedProjects) {
+        const group = projectGroups.get(projectName);
+        if (!group) continue;
 
         items.push({
             label: projectName,
@@ -199,13 +208,13 @@ async function showAllScriptsMenu() {
             packagePath: ''
         });
 
-        for (const script of scripts) {
+        for (const script of group.scripts) {
             items.push({
-                label: `$(play) ${script.name}`,
+                label: script.name,
                 description: script.command.length > 50 ? script.command.substring(0, 50) + '...' : script.command,
-                detail: `${projectName}`,
+                detail: projectName,
                 scriptName: script.name,
-                packagePath: pkgFile.fsPath
+                packagePath: group.packagePath
             });
         }
     }
@@ -213,7 +222,7 @@ async function showAllScriptsMenu() {
     const quickPick = vscode.window.createQuickPick<ScriptItem>();
     quickPick.items = items;
     quickPick.placeholder = 'Search and select script to run';
-    quickPick.title = 'NPM Scripts';
+    quickPick.title = 'Scripts';
     quickPick.matchOnDescription = true;
     quickPick.matchOnDetail = true;
 

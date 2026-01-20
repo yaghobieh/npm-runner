@@ -1,7 +1,10 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 import { spawn, ChildProcess } from 'child_process';
 import { NodeVersionManager } from './NodeVersionManager';
+
+export type PackageManager = 'npm' | 'yarn' | 'pnpm' | 'auto';
 
 export interface RunningScript {
     id: string;
@@ -18,6 +21,7 @@ export interface RunningScript {
     nodeVersion: string;
     selectedNodeVersion: string;
     port: string | null;
+    packageManager: PackageManager;
 }
 
 export class ScriptRunner {
@@ -30,7 +34,22 @@ export class ScriptRunner {
 
     constructor(private nodeVersionManager: NodeVersionManager) {}
 
-    async runScript(scriptName: string, packageJsonPath: string, debug: boolean = false, overrideNodeVersion?: string): Promise<string> {
+    detectPackageManager(cwd: string): PackageManager {
+        if (fs.existsSync(path.join(cwd, 'pnpm-lock.yaml'))) {
+            return 'pnpm';
+        }
+        if (fs.existsSync(path.join(cwd, 'yarn.lock'))) {
+            return 'yarn';
+        }
+        return 'npm';
+    }
+
+    getPackageManagerCommand(pm: PackageManager, cwd: string): string {
+        const resolved = pm === 'auto' ? this.detectPackageManager(cwd) : pm;
+        return resolved;
+    }
+
+    async runScript(scriptName: string, packageJsonPath: string, debug: boolean = false, overrideNodeVersion?: string, overridePackageManager?: PackageManager): Promise<string> {
         const id = `${scriptName}-${Date.now()}`;
         const cwd = path.dirname(packageJsonPath);
         
@@ -39,10 +58,14 @@ export class ScriptRunner {
         
         let nodeVersion = savedVersion || await this.nodeVersionManager.getCurrentVersion() || 'system';
 
+        const configPm = vscode.workspace.getConfiguration('npmRunner').get<PackageManager>('packageManager', 'auto');
+        const pm = overridePackageManager ?? configPm;
+        const resolvedPm = this.getPackageManagerCommand(pm, cwd);
+
         const script: RunningScript = {
             id,
             name: scriptName,
-            command: `npm run ${scriptName}`,
+            command: `${resolvedPm} run ${scriptName}`,
             packageJsonPath,
             cwd,
             process: null,
@@ -53,13 +76,14 @@ export class ScriptRunner {
             exitCode: null,
             nodeVersion,
             selectedNodeVersion: savedVersion,
-            port: null
+            port: null,
+            packageManager: resolvedPm as PackageManager
         };
 
         this.runningScripts.set(id, script);
         this._onScriptsChanged.fire();
 
-        const fullCommand = `${shellPrefix}npm run ${scriptName}`;
+        const fullCommand = `${shellPrefix}${resolvedPm} run ${scriptName}`;
 
         const child = spawn('bash', ['-c', fullCommand], {
             cwd,
@@ -160,14 +184,14 @@ export class ScriptRunner {
         const script = this.runningScripts.get(id);
         if (!script) return;
 
-        const { name, packageJsonPath, debug, selectedNodeVersion } = script;
+        const { name, packageJsonPath, debug, selectedNodeVersion, packageManager } = script;
 
         await this.stopScript(id);
         await new Promise(resolve => setTimeout(resolve, 500));
         
         this.runningScripts.delete(id);
 
-        await this.runScript(name, packageJsonPath, debug, selectedNodeVersion);
+        await this.runScript(name, packageJsonPath, debug, selectedNodeVersion, packageManager);
     }
 
     async updateScriptNodeVersion(id: string, newVersion: string): Promise<void> {
