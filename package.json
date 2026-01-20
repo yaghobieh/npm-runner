@@ -2,7 +2,7 @@
     "name": "npm-runner",
     "displayName": "NPM Runner",
     "description": "Run and manage NPM scripts with play buttons in package.json",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "publisher": "Yaghobieh",
     "license": "MIT",
     "icon": "resources/icon.png",
@@ -102,11 +102,42 @@
                     "command": "npmRunner.openPanel"
                 }
             ]
+        },
+        "configuration": {
+            "title": "NPM Runner",
+            "properties": {
+                "npmRunner.packageManager": {
+                    "type": "string",
+                    "enum": ["auto", "npm", "yarn", "pnpm"],
+                    "default": "auto",
+                    "description": "Package manager to use. Auto detects from lockfile."
+                },
+                "npmRunner.showNodeVersion": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show Node.js version before running"
+                },
+                "npmRunner.defaultNodeVersion": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Default Node version (empty = system)"
+                },
+                "npmRunner.confirmOnClose": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Confirm before closing running script"
+                },
+                "npmRunner.autoScrollOutput": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Auto-scroll terminal output"
+                }
+            }
         }
     },
     "repository": {
         "type": "git",
-        "url": "https://gitlab.com/space7733008/npm-runner.git"
+        "url": "https://github.com/yaghobieh/npm-runner.git"
       },
     "scripts": {
         "vscode:prepublish": "npm run compile",

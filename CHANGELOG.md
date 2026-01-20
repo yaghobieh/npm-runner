@@ -2,6 +2,32 @@
 
 All notable changes to the NPM Runner extension will be documented in this file.
 
+## [1.0.7] - 2026-01-20
+
+### Added
+- Package Manager Selection
+  - Support for npm, yarn, and pnpm
+  - Auto-detection from lockfile (pnpm-lock.yaml, yarn.lock, package-lock.json)
+  - Configurable via settings (npmRunner.packageManager)
+  - Shows active package manager in script info bar
+
+- Close Confirmation with Port Kill
+  - Prompts when closing a running script
+  - Option to also kill the port when closing
+  - Prevents accidentally leaving ports blocked
+
+- Copy Output Button
+  - New toolbar button to copy terminal output to clipboard
+  - Strips ANSI color codes for clean text
+
+- Execution Time Display
+  - Shows how long a script has been running
+  - Updates with format: seconds, minutes, hours
+
+### Improved
+- Scripts grouped alphabetically by project in Browse menu
+- Cleaner script picker without redundant icons
+
 ## [1.0.6] - 2026-01-09
 
 ### Added
